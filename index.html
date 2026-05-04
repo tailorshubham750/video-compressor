@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Video Compressor Pro++</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #0f172a, #1e3a8a);
+            color: white;
+            min-height: 100vh;
+        }
+
+        .header {
+            text-align: center;
+            padding: 30px 20px;
+        }
+
+        .logo {
+            font-size: 40px;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%,100% { transform: translateY(0px); }
+            50% { transform: translateY(-8px); }
+        }
+
+        .title {
+            font-size: 26px;
+            font-weight: bold;
+        }
+
+        .subtitle {
+            opacity: 0.7;
+            margin-top: 5px;
+        }
+
+        .creator {
+            margin-top: 5px;
+            font-size: 14px;
+            background: linear-gradient(90deg,#38bdf8,#4ade80);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: bold;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 500px;
+            margin: auto;
+        }
+
+        .card {
+            background: rgba(255,255,255,0.08);
+            padding: 20px;
+            border-radius: 15px;
+            margin-top: 20px;
+            backdrop-filter: blur(15px);
+        }
+
+        .drop-zone {
+            border: 2px dashed #38bdf8;
+            padding: 25px;
+            text-align: center;
+            cursor: pointer;
+            border-radius: 10px;
+            transition: background 0.2s, border-color 0.2s;
+        }
+
+        .drop-zone.dragover {
+            background: rgba(56,189,248,0.15);
+            border-color: #4ade80;
+        }
+
+        .drop-zone:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        select, button {
+            width: 100%;
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 8px;
+            border: none;
+            font-size: 14px;
+        }
+
+        button {
+            background: linear-gradient(90deg,#38bdf8,#4ade80);
+            color: black;
+            font-weight: bold;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .progress-bar {
+            height: 12px;
+            width: 0%;
+            background: linear-gradient(90deg,#22c55e,#4ade80);
+            border-radius: 10px;
+            transition: width 0.3s;
+        }
+
+        .progress-bg {
+            background: rgba(255,255,255,0.2);
+            margin-top: 10px;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        video {
+            width: 100%;
+            margin-top: 10px;
+            border-radius: 10px;
+            display: none;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding-bottom: 30px;
+            opacity: 0.5;
+            font-size: 13px;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="header">
+    <div class="logo">🎬</div>
+    <div class="title">Video Compressor Pro++</div>
+    <div class="subtitle">Compress videos up to 1000MB → 10MB / 20MB</div>
+    <div class="creator">Created by gouru_</div>
+</div>
+
+<div class="container">
+
+    <div class="card">
+        <div id="dropZone" class="drop-zone">
+            Drag &amp; Drop Video Here 📂
+        </div>
+
+        <p id="fileName" style="margin-top:10px; font-size:14px; opacity:0.7;"></p>
+
+        <input type="file" id="fileInput" multiple accept="video/*" hidden>
+
+        <select id="size">
+            <option value="10">10 MB</option>
+            <option value="20">20 MB</option>
+        </select>
+
+        <button id="compressBtn" onclick="upload()" disabled>🚀 Compress Video</button>
+    </div>
+
+    <div id="result"></div>
+
+</div>
+
+<div class="footer">
+    © 2026 gouru_ | Video Compressor Pro++
+</div>
+
+<script>
+let files = [];
+const dropZone = document.getElementById("dropZone");
+const fileInput = document.getElementById("fileInput");
+const compressBtn = document.getElementById("compressBtn");
+
+function updateFileList(newFiles) {
+    files = newFiles;
+    if (files.length > 0) {
+        let names = [];
+        for (let f of files) {
+            names.push(f.name);
+        }
+        document.getElementById("fileName").innerText = "Selected: " + names.join(", ");
+        compressBtn.disabled = false;
+    } else {
+        document.getElementById("fileName").innerText = "";
+        compressBtn.disabled = true;
+    }
+}
+
+dropZone.onclick = () => fileInput.click();
+
+// Drag and drop handlers
+dropZone.ondragover = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dropZone.classList.add("dragover");
+};
+
+dropZone.ondragleave = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dropZone.classList.remove("dragover");
+};
+
+dropZone.ondrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dropZone.classList.remove("dragover");
+
+    if (e.dataTransfer.files.length > 0) {
+        updateFileList(e.dataTransfer.files);
+    }
+};
+
+fileInput.onchange = (e) => {
+    if (e.target.files.length > 0) {
+        updateFileList(e.target.files);
+    }
+};
+
+function upload() {
+    if (files.length === 0) return;
+
+    compressBtn.disabled = true;
+    compressBtn.innerText = "⏳ Compressing...";
+
+    let formData = new FormData();
+
+    for (let f of files) {
+        formData.append("videos", f);
+    }
+
+    formData.append("size", document.getElementById("size").value);
+
+    fetch("/upload", { method:"POST", body:formData })
+    .then(res=>res.json())
+    .then(data=>{
+        let html = "";
+
+        data.forEach(v=>{
+            html += `
+            <div class="card">
+                <h4>${v.name}</h4>
+
+                <div class="progress-bg">
+                    <div class="progress-bar" id="bar-${v.name}"></div>
+                </div>
+
+                <div id="text-${v.name}">Starting...</div>
+
+                <video id="video-${v.name}" controls></video>
+
+                <a href="/outputs/${v.output}" download id="download-${v.name}" style="display:none;">
+                    <button>⬇ Download</button>
+                </a>
+            </div>
+            `;
+
+            trackProgress(v.name, v.output);
+        });
+
+        document.getElementById("result").innerHTML = html;
+        compressBtn.innerText = "🚀 Compress Video";
+    })
+    .catch(err => {
+        compressBtn.disabled = false;
+        compressBtn.innerText = "🚀 Compress Video";
+    });
+}
+
+function trackProgress(filename, outputName) {
+    let startTime = Date.now();
+
+    const interval = setInterval(()=>{
+        fetch(`/progress/${filename}`)
+        .then(res=>res.json())
+        .then(data=>{
+
+            let percent = data.completed || 0;
+
+            let elapsed = (Date.now()-startTime)/1000;
+            let speed = percent/(elapsed||1);
+            let remaining = (100-percent)/(speed||1);
+
+            document.getElementById(`bar-${filename}`).style.width = percent+"%";
+
+            if(data.compression_percent !== undefined){
+
+                document.getElementById(`text-${filename}`).innerText =
+                `✅ Done | Saved ${data.saved} MB (${data.compression_percent}%)`;
+
+                // Load the compressed video preview
+                const video = document.getElementById(`video-${filename}`);
+                video.src = `/outputs/${outputName}?t=${Date.now()}`;
+                video.style.display = "block";
+                video.load();
+
+                // Show download button
+                document.getElementById(`download-${filename}`).style.display = "block";
+
+                clearInterval(interval);
+                return;
+            }
+
+            document.getElementById(`text-${filename}`).innerText =
+            `⏳ ${Math.round(percent)}% | ⏱ ${remaining.toFixed(1)}s left`;
+        });
+    },700);
+}
+</script>
+
+</body>
+</html>
